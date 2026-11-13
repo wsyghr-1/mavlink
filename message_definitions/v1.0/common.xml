@@ -6626,5 +6626,14 @@
       <field type="float[3]" name="v_body_std">Type of estimator that is providing the odometry.</field>
       <field type="uint8_t" name="is_valid">radar odom valid type</field>
     </message>
+    <message id="16005" name="GPS_VELOCITY_NED">
+      <description>GPS velocity in NED frame.</description>
+      <field type="uint64_t" name="time_usec" units="us">Timestamp (UNIX Epoch time or time since system boot).</field>
+      <field type="int16_t" name="vn" units="cm/s">North Speed. Positive toward north.</field>
+      <field type="int16_t" name="ve" units="cm/s">East Speed. Positive toward east.</field>
+      <field type="int16_t" name="vd" units="cm/s">Down Speed. Positive downward.</field>
+      <field type="uint16_t" name="accuracy" units="cm/s">Velocity accuracy estimate. UINT16_MAX indicates unknown accuracy.</field>
+      <field type="uint8_t" name="valid">Velocity validity flag: 0 = invalid, 1 = valid.</field>
+    </message>
   </messages>
 </mavlink>
