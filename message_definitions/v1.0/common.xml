@@ -5167,26 +5167,37 @@
         <description>Illuminator thermistor failure.</description>
       </entry>
     </enum>
-    <enum name="REC_CMD_TYPE">
-      <entry value="0" name="REC_CMD_START"/>
-      <entry value="1" name="REC_CMD_STOP"/>
-      <entry value="2" name="REC_CMD_QUERY"/>
-    </enum>
-    <enum name="REC_RESULT">
-      <entry value="0" name="REC_RESULT_OK"/>
-      <entry value="1" name="REC_RESULT_FAILED"/>
-      <entry value="2" name="REC_RESULT_BUSY"/>
-    </enum>
-    <enum name="REC_STATE">
-      <entry value="0" name="REC_STATE_IDLE"/>
-      <entry value="1" name="REC_STATE_RECORDING"/>
-      <entry value="2" name="REC_STATE_ERROR"/>
-    </enum>
-    <enum name="REC_DATA_TYPE" bitmask="true">
-      <entry value="1" name="REC_DATA_RADAR"/>
-      <entry value="2" name="REC_DATA_VISION"/>
-      <entry value="4" name="REC_DATA_FLIGHT_CONTROL"/>
-    </enum>
+<!-- RECORD enums -->
+<enum name="REC_CMD_TYPE">
+	<entry value="0" name="REC_CMD_START"/>
+	<entry value="1" name="REC_CMD_STOP"/>
+	<entry value="2" name="REC_CMD_QUERY"/>
+</enum>
+
+<enum name="REC_RESULT">
+	<entry value="0" name="REC_RESULT_OK"/>
+	<entry value="1" name="REC_RESULT_FAILED"/>
+	<entry value="2" name="REC_RESULT_BUSY"/>
+</enum>
+
+<enum name="REC_STATE">
+	<entry value="0" name="REC_STATE_IDLE"/>
+	<entry value="1" name="REC_STATE_RECORDING"/>
+	<entry value="2" name="REC_STATE_ERROR"/>
+	<entry value="3" name="REC_STATE_STARTING"/>
+	<entry value="4" name="REC_STATE_WAIT_DATA"/>
+	<entry value="5" name="REC_STATE_VALIDATING"/>
+	<entry value="6" name="REC_STATE_STOPPING"/>
+	<entry value="7" name="REC_STATE_COMPLETED"/>
+</enum>
+
+<enum name="REC_DATA_TYPE" bitmask="true">
+	<entry value="1" name="REC_DATA_RADAR"/>
+	<entry value="2" name="REC_DATA_VISION"/>
+	<entry value="4" name="REC_DATA_FLIGHT_CONTROL"/>
+</enum>
+
+
   </enums>
   <messages>
     <message id="1" name="SYS_STATUS">
@@ -7965,25 +7976,47 @@
       <field type="uint8_t" name="valid">target est ned valid</field>
       <field type="uint8_t" name="cls">target type</field>
     </message>
-    <message id="16002" name="REC_CMD">
-      <description>Record control command.</description>
-      <field type="uint16_t" name="req_id">Request id.</field>
-      <field type="uint8_t" name="cmd" enum="REC_CMD_TYPE">Record command: start, stop or query.</field>
-      <field type="uint32_t" name="data_mask" enum="REC_DATA_TYPE" display="bitmask">Data types to record. Use 0 for default.</field>
-      <field type="char[32]" name="file_name">Record file name.</field>
-    </message>
-    <message id="16003" name="REC_ACK">
-      <description>Record command acknowledgement.</description>
-      <field type="uint16_t" name="req_id">Request id copied from REC_CMD.</field>
-      <field type="uint8_t" name="cmd" enum="REC_CMD_TYPE">Command copied from REC_CMD.</field>
-      <field type="uint8_t" name="result" enum="REC_RESULT">Command result.</field>
-    </message>
-    <message id="16004" name="REC_STATUS">
-      <description>Record status response.</description>
-      <field type="uint16_t" name="req_id">Request id copied from REC_CMD_QUERY. Use 0 for periodic status.</field>
-      <field type="uint8_t" name="state" enum="REC_STATE">Current record state.</field>
-      <field type="uint32_t" name="data_mask" enum="REC_DATA_TYPE" display="bitmask">Current recording data mask.</field>
-      <field type="char[32]" name="file_name">Current record file name.</field>
+<!-- RECORD messages -->
+<message id="16002" name="REC_CMD">
+	<description>Record control command.</description>
+	<field type="uint16_t" name="req_id">Request id.</field>
+	<field type="uint8_t" name="cmd" enum="REC_CMD_TYPE">Record command: start, stop or query.</field>
+	<field type="uint8_t" name="sensor_type" display="bitmask">Sensors to record: bit0=radar, bit1=camera, bit2=lidar, bit3=tof.</field>
+	<field type="uint16_t" name="record_data_type">Per-sensor data type: 2bits each, 0=raw,1=processed,2-3=reserved.</field>
+	<field type="uint32_t" name="data_mask" enum="REC_DATA_TYPE" display="bitmask">Data types to record. Use 0 for default.</field>
+	<field type="char[32]" name="file_name">Record file name.</field>
+</message>
+
+<message id="16003" name="REC_ACK">
+	<description>Record command acknowledgement.</description>
+	<field type="uint16_t" name="req_id">Request id copied from REC_CMD.</field>
+	<field type="uint8_t" name="cmd" enum="REC_CMD_TYPE">Command copied from REC_CMD.</field>
+	<field type="uint8_t" name="result" enum="REC_RESULT">Command result.</field>
+</message>
+
+<message id="16004" name="REC_STATUS">
+	<description>Record status response.</description>
+	<field type="uint16_t" name="req_id">Request id copied from REC_CMD_QUERY. Use 0 for periodic status.</field>
+	<field type="uint8_t" name="state" enum="REC_STATE">Current record state.</field>
+	<field type="uint8_t" name="sensor_type" display="bitmask">Active sensors: bit0=radar, bit1=camera, bit2=lidar, bit3=tof.</field>
+	<field type="uint16_t" name="record_data_type">Active data types.</field>
+	<field type="uint32_t" name="data_mask" enum="REC_DATA_TYPE" display="bitmask">Current recording data mask.</field>
+	<field type="char[32]" name="file_name">Current record file name.</field>
+	<extensions/>
+	<field type="uint32_t" name="elapsed_s" units="s">Elapsed time since the start command.</field>
+	<field type="uint32_t" name="frame_count">Successfully persisted radar frame count.</field>
+	<field type="uint32_t" name="written_mib" units="MiB">Successfully persisted radar payload size.</field>
+	<field type="uint32_t" name="free_mib" units="MiB">Available recording filesystem space.</field>
+	<field type="uint16_t" name="error_code">Recorder error code, zero when no error is active.</field>
+</message>
+    <message id="16005" name="GPS_VELOCITY_NED">
+      <description>GPS velocity in NED frame.</description>
+      <field type="uint64_t" name="time_usec" units="us">Timestamp (UNIX Epoch time or time since system boot).</field>
+      <field type="int16_t" name="vn" units="cm/s">North Speed. Positive toward north.</field>
+      <field type="int16_t" name="ve" units="cm/s">East Speed. Positive toward east.</field>
+      <field type="int16_t" name="vd" units="cm/s">Down Speed. Positive downward.</field>
+      <field type="uint16_t" name="accuracy" units="cm/s">Velocity accuracy estimate. UINT16_MAX indicates unknown accuracy.</field>
+      <field type="uint8_t" name="valid">Velocity validity flag: 0 = invalid, 1 = valid.</field>
     </message>
   </messages>
 </mavlink>
